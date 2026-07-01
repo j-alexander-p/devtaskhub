@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
 import { CreateProjectBody } from "../types/projects";
+import { UrlParams } from "../types/projects";
 
 export default async function createProject(
   req: Request<{}, {}, CreateProjectBody>,
@@ -62,6 +63,33 @@ export async function getAllProjects(
     res.status(200).json({
       message: "Projects retrieved successfully.",
       projects: result.rows,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function getProjectById(
+  req: Request<UrlParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const projectId = parseInt(req.params.id);
+
+  try {
+    const result = await db.query("SELECT * FROM projects WHERE id = $1", [
+      projectId,
+    ]);
+
+    const project = result.rows[0];
+
+    if (!project) {
+      return res.status(404).json({ error: "Fetching failed." });
+    }
+
+    res.status(200).json({
+      message: "Retrieved successfully.",
+      project: project,
     });
   } catch (err: any) {
     next(err);

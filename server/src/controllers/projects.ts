@@ -40,3 +40,30 @@ export default async function createProject(
     next(err);
   }
 }
+
+export async function getAllProjects(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const { userId } = req;
+
+  try {
+    const result = await db.query(
+      `
+      SELECT DISTINCT p.*
+      FROM projects p
+      LEFT JOIN project_members pm ON p.id = pm.project_id
+      WHERE p.created_by = $1 OR pm.user_id = $1
+      `,
+      [userId],
+    );
+
+    res.status(200).json({
+      message: "Projects retrieved successfully.",
+      projects: result.rows,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}

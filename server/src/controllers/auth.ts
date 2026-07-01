@@ -60,7 +60,7 @@ export async function registerUser(
     });
   } catch (err: any) {
     if (err.code === "23505") {
-      return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({ message: "User already exists." });
     }
 
     next(err);

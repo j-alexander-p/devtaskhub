@@ -142,3 +142,41 @@ export async function updateProject(
     next(err);
   }
 }
+
+export async function deleteProject(
+  req: Request<UrlParams, {}, {}>,
+  res: Response,
+  next: NextFunction,
+) {
+  const id = parseInt(req.params.id);
+  const { userId } = req;
+
+  if (!id) {
+    return res.status(400).json({ error: "Needs valid fields." });
+  }
+
+  try {
+    const projectCreator = await db.query(
+      "SELECT * FROM projects WHERE created_by = $1 AND id = $2",
+      [userId, id],
+    );
+
+    const loggedInCreator = projectCreator.rows[0];
+
+    if (!loggedInCreator) {
+      return res.status(403).json({ error: "Denied." });
+    }
+
+    const deleted = await db.query(
+      "DELETE FROM projects WHERE id = $1 RETURNING id",
+      [id],
+    );
+
+    res.status(200).json({
+      message: "Project successfully deleted.",
+      deletedId: deleted.rows[0].id,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}

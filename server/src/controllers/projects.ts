@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
-import { CreateProjectBody } from "../types/projects";
-import { UrlParams } from "../types/projects";
+import {
+  CreateProjectBody,
+  UrlParams,
+  UpdateProjectBody,
+} from "../types/projects";
+import { userInfo } from "node:os";
 
 export default async function createProject(
   req: Request<{}, {}, CreateProjectBody>,
@@ -90,6 +94,49 @@ export async function getProjectById(
     res.status(200).json({
       message: "Retrieved successfully.",
       project: project,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function updateProject(
+  req: Request<UrlParams, {}, UpdateProjectBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  const { status } = req.body;
+  const id = parseInt(req.params.id);
+  const { userId } = req;
+
+  if (!status) {
+    return res.status(400).json({ error: "Needs valid fields." });
+  }
+
+  if (!id) {
+    return res.status(400).json({ error: "Needs valid fields." });
+  }
+
+  try {
+    const projectCreator = await db.query(
+      "SELECT * FROM projects WHERE created_by = $1 AND id = $2",
+      [userId, id],
+    );
+
+    const loggedInCreator = projectCreator.rows[0];
+
+    if (!loggedInCreator) {
+      return res.status(403).json({ error: "Denied." });
+    }
+
+    const result = await db.query(
+      "UPDATE projects SET status = $1 WHERE id = $2 RETURNING *",
+      [status, id],
+    );
+
+    res.status(200).json({
+      message: "Updated succesffully.",
+      project: result.rows[0],
     });
   } catch (err: any) {
     next(err);

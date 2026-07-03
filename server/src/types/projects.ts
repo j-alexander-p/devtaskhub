@@ -5,3 +5,7 @@ export interface CreateProjectBody {
 export interface UrlParams {
   id: string;
 }
+
+export interface UpdateProjectBody {
+  status: string;
+}

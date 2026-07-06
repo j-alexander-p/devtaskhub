@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
-import {
-  CreateProjectBody,
-  UrlParams,
-  UpdateProjectBody,
-} from "../types/projects";
+import { UrlParams } from "../types/common";
+import { CreateProjectBody, UpdateProjectBody } from "../types/projects";
 
 export default async function createProject(
   req: Request<{}, {}, CreateProjectBody>,

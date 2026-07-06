@@ -5,6 +5,7 @@ import errorHandler from "./middleware/errorHandler";
 import authMiddleware from "./middleware/authMiddleware";
 import { Request, Response } from "express";
 import projectRoutes from "./routes/projects";
+import userRoutes from "./routes/users";
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(cookieParser());
 //Routes here
 app.use("/auth", authRoutes);
 app.use("/projects", authMiddleware, projectRoutes);
+app.use("/users", authMiddleware, userRoutes);
 
 // Error handling here
 app.use(errorHandler);

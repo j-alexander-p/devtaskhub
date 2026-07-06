@@ -5,7 +5,6 @@ import {
   UrlParams,
   UpdateProjectBody,
 } from "../types/projects";
-import { userInfo } from "node:os";
 
 export default async function createProject(
   req: Request<{}, {}, CreateProjectBody>,

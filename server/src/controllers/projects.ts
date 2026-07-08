@@ -147,9 +147,9 @@ export async function deleteProject(
   const id = parseInt(req.params.id);
   const { userId } = req;
 
-  if (!id) {
-    return res.status(400).json({ error: "Needs valid fields." });
-  }
+  // if (!id) {
+  //   return res.status(400).json({ error: "Needs valid fields." });
+  // }
 
   try {
     const projectCreator = await db.query(

@@ -104,4 +104,31 @@ export async function deleteUser(
   next: NextFunction,
 ) {
   const userId = req.userId;
+  const id = parseInt(req.params.id);
+
+  if (id !== userId) {
+    return res.status(403).json({ error: "Invalid id match." });
+  }
+
+  try {
+    const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+
+    const goingToDelete = result.rows[0];
+
+    if (!goingToDelete) {
+      return res.status(404).json({ error: "Not found." });
+    }
+
+    const deleted = await db.query(
+      "DELETE FROM users WHERE id = $1 RETURNING id",
+      [id],
+    );
+
+    res.status(200).json({
+      message: "User deleted.",
+      deletedId: deleted.rows[0].id,
+    });
+  } catch (err: any) {
+    next(err);
+  }
 }

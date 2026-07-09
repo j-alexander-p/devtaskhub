@@ -4,6 +4,7 @@ import createProject, {
   getAllProjects,
   getProjectById,
   deleteProject,
+  addProjectMember,
 } from "../controllers/projects";
 
 const router = Router();
@@ -17,5 +18,7 @@ router.get("/:id", getProjectById);
 router.patch("/:id", updateProject);
 
 router.delete("/:id", deleteProject);
+
+router.post("/:id/members", addProjectMember);
 
 export default router;

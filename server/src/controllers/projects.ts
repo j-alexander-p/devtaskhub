@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
 import { UrlParams } from "../types/common";
-import { CreateProjectBody, UpdateProjectBody } from "../types/projects";
+import {
+  CreateProjectBody,
+  UpdateProjectBody,
+  addMemberBody,
+} from "../types/projects";
 
 export default async function createProject(
   req: Request<{}, {}, CreateProjectBody>,
@@ -171,6 +175,54 @@ export async function deleteProject(
     res.status(200).json({
       message: "Project successfully deleted.",
       deletedId: deleted.rows[0].id,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+//******************************* Project Member Routes *********************************** */
+
+export async function addProjectMember(
+  req: Request<UrlParams, {}, addMemberBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  const targetId = req.body.id;
+  const role = req.body.role ?? "member";
+  const projectId = parseInt(req.params.id);
+  const creator = req.userId;
+
+  try {
+    const fetchCreator = await db.query(
+      "SELECT * FROM projects WHERE id = $1",
+      [projectId],
+    );
+
+    const project = fetchCreator.rows[0];
+
+    if (project.created_by !== creator) {
+      return res.status(403).json({
+        error: "Invalid credentials.",
+      });
+    }
+
+    const result = await db.query(
+      "INSERT INTO project_members (project_id, user_id, role) VALUES ($1,$2,$3) RETURNING project_id, user_id",
+      [projectId, targetId, role],
+    );
+
+    const addedId = result.rows[0];
+
+    if (!addedId) {
+      return res.status(500).json({
+        error: "Insert failed!",
+      });
+    }
+
+    res.status(201).json({
+      message: "Member added successfully.",
+      id: targetId,
     });
   } catch (err: any) {
     next(err);

@@ -5,3 +5,8 @@ export interface CreateProjectBody {
 export interface UpdateProjectBody {
   status: string;
 }
+
+export interface addMemberBody {
+  id: string;
+  role: string;
+}

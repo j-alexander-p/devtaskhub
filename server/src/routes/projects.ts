@@ -5,6 +5,7 @@ import createProject, {
   getProjectById,
   deleteProject,
   addProjectMember,
+  removeProjectMember,
 } from "../controllers/projects";
 
 const router = Router();
@@ -20,5 +21,7 @@ router.patch("/:id", updateProject);
 router.delete("/:id", deleteProject);
 
 router.post("/:id/members", addProjectMember);
+
+router.delete("/:id/members/:memberId", removeProjectMember);
 
 export default router;

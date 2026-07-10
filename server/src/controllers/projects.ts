@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
-import { UrlParams } from "../types/common";
+import { UrlParams, ProjectMemberParams } from "../types/common";
 import {
   CreateProjectBody,
   UpdateProjectBody,
@@ -188,7 +188,7 @@ export async function addProjectMember(
   res: Response,
   next: NextFunction,
 ) {
-  const targetId = req.body.id;
+  const targetId = req.body.member_id;
   const role = req.body.role ?? "member";
   const projectId = parseInt(req.params.id);
   const creator = req.userId;
@@ -223,6 +223,48 @@ export async function addProjectMember(
     res.status(201).json({
       message: "Member added successfully.",
       id: targetId,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function removeProjectMember(
+  req: Request<ProjectMemberParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const projectId = parseInt(req.params.id);
+  const memberId = parseInt(req.params.memberId);
+
+  try {
+    const result = await db.query("SELECT * FROM projects WHERE id = $1", [
+      projectId,
+    ]);
+
+    const targetProject = result.rows[0];
+
+    if (!targetProject) {
+      return res.status(404).json({ error: "Not found." });
+    }
+
+    if (targetProject.created_by !== req.userId && memberId !== req.userId) {
+      return res.status(403).json({ error: "Denied." });
+    }
+
+    const deleted = await db.query(
+      "DELETE FROM project_members WHERE project_id = $1 AND user_id = $2",
+      [projectId, memberId],
+    );
+
+    const whoAndWhere = {
+      projectId,
+      memberId,
+    };
+
+    res.status(200).json({
+      message: "Member successfully removed from the project.",
+      whoAndWhere,
     });
   } catch (err: any) {
     next(err);

@@ -7,6 +7,6 @@ export interface UpdateProjectBody {
 }
 
 export interface addMemberBody {
-  id: string;
+  member_id: string;
   role: string;
 }

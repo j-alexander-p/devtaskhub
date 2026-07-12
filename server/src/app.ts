@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth";
+import taskRoutes from "./routes/tasks";
 import errorHandler from "./middleware/errorHandler";
 import authMiddleware from "./middleware/authMiddleware";
 import { Request, Response } from "express";
@@ -17,6 +18,7 @@ app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use("/projects", authMiddleware, projectRoutes);
 app.use("/users", authMiddleware, userRoutes);
+app.use("/tasks", authMiddleware, taskRoutes);
 
 // Error handling here
 app.use(errorHandler);

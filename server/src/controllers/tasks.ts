@@ -49,3 +49,27 @@ export async function createTask(
     next(err);
   }
 }
+
+export async function getAllTasks(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const { userId } = req;
+
+  try {
+    const result = await db.query(
+      `SELECT * FROM tasks WHERE assigned_to = $1`,
+      [userId],
+    );
+
+    const tasks = result.rows;
+
+    res.status(200).json({
+      message: "Tasks retrieved successfully.",
+      tasks,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}

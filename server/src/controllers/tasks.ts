@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import db from "../db";
 import { CreateTaskBody } from "../types/tasks";
 import { UrlParams } from "../types/common";
+import { Url } from "node:url";
 
 export async function createTask(
   req: Request<UrlParams, {}, CreateTaskBody>,
@@ -68,6 +69,35 @@ export async function getAllTasks(
     res.status(200).json({
       message: "Tasks retrieved successfully.",
       tasks,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function getTaskById(
+  req: Request<UrlParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const taskId = parseInt(req.params.id);
+
+  try {
+    const result = await db.query("SELECT * FROM tasks WHERE id = $1 ", [
+      taskId,
+    ]);
+
+    const task = result.rows[0];
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Not found.",
+      });
+    }
+
+    res.status(200).json({
+      message: "Task found.",
+      task,
     });
   } catch (err: any) {
     next(err);

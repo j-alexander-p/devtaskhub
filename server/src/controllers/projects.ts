@@ -93,7 +93,7 @@ export async function getProjectById(
 
     res.status(200).json({
       message: "Retrieved successfully.",
-      project: project,
+      project,
     });
   } catch (err: any) {
     next(err);

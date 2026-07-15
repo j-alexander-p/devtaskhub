@@ -3,3 +3,9 @@ export interface CreateTaskBody {
   description?: string;
   assigned_to?: number;
 }
+
+export interface UpdateTaskBody {
+  title: string;
+  description?: string;
+  assigned_to?: number;
+}

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
-import { CreateTaskBody } from "../types/tasks";
+import { CreateTaskBody, UpdateTaskBody } from "../types/tasks";
 import { UrlParams } from "../types/common";
 import { Url } from "node:url";
 
@@ -98,6 +98,48 @@ export async function getTaskById(
     res.status(200).json({
       message: "Task found.",
       task,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function updateTask(
+  req: Request<UrlParams, {}, UpdateTaskBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  const taskId = parseInt(req.params.id);
+  const { userId } = req;
+  const { title, description, assigned_to } = req.body;
+
+  try {
+    const grabTask = await db.query("SELECT * FROM tasks WHERE id = $1 ", [
+      taskId,
+    ]);
+
+    const task = grabTask.rows[0];
+
+    if (!task) {
+      return res.status(404).json({ error: "Not found." });
+    }
+
+    if (task.assigned_to !== userId && task.created_by !== userId) {
+      return res.status(403).json({ error: "Invalid credentials." });
+    }
+
+    const newTitle = title ?? task.title;
+    const newDescription = description ?? task.description;
+    const newAssignment = assigned_to ?? task.assigned_to;
+
+    const updatedTask = await db.query(
+      "UPDATE tasks SET title = $1, description = $2, assigned_to = $3 WHERE id = $4 RETURNING id, title, description, assigned_to",
+      [newTitle, newDescription, newAssignment, taskId],
+    );
+
+    res.status(200).json({
+      message: "Task updated.",
+      task: updatedTask.rows[0],
     });
   } catch (err: any) {
     next(err);

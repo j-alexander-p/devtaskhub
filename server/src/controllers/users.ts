@@ -68,7 +68,7 @@ export async function updateUser(
 
     if (!user) {
       return res.status(404).json({
-        error: "Server error",
+        error: "Not found",
       });
     }
 

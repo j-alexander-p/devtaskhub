@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import db from "../db";
-import { CreateTaskBody, UpdateTaskBody } from "../types/tasks";
+import {
+  CreateTaskBody,
+  UpdateAssigneeBody,
+  UpdateTaskBody,
+} from "../types/tasks";
 import { UrlParams } from "../types/common";
 import { Url } from "node:url";
 
@@ -140,6 +144,88 @@ export async function updateTask(
     res.status(200).json({
       message: "Task updated.",
       task: updatedTask.rows[0],
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function deleteTask(
+  req: Request<UrlParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const userId = req.userId;
+  const taskId = parseInt(req.params.id);
+
+  try {
+    const result = await db.query("SELECT * FROM tasks WHERE id = $1", [
+      taskId,
+    ]);
+
+    const goingToDelete = result.rows[0];
+
+    if (!goingToDelete) {
+      return res.status(404).json({ error: "Not found." });
+    }
+
+    if (
+      goingToDelete.created_by !== userId &&
+      goingToDelete.assigned_to !== userId
+    ) {
+      return res.status(403).json({ error: "Invalid credentials to delete." });
+    }
+
+    const deleted = await db.query(
+      "DELETE FROM tasks WHERE id = $1 RETURNING id",
+      [taskId],
+    );
+
+    res.status(200).json({
+      message: "Task deleted.",
+      deletedId: deleted.rows[0],
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}
+
+export async function reassignTask(
+  req: Request<UrlParams, {}, UpdateAssigneeBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  const userId = req.userId;
+  const taskId = parseInt(req.params.id);
+  const newAssignedTo = req.body.assigned_to;
+
+  if (!newAssignedTo) {
+    return res.status(400).json({ error: "Needs a user id." });
+  }
+
+  try {
+    const result = await db.query("SELECT * FROM tasks WHERE id = $1 ", [
+      taskId,
+    ]);
+
+    const task = result.rows[0];
+
+    if (!task) {
+      return res.status(404).json({ error: "Not found." });
+    }
+
+    if (userId !== task.created_by) {
+      return res.status(403).json({ error: "Invalid credentials." });
+    }
+
+    const update = await db.query(
+      "UPDATE tasks SET assigned_to = $1 WHERE id = $2 RETURNING *",
+      [newAssignedTo, taskId],
+    );
+
+    res.status(200).json({
+      message: "Updated task assignment.",
+      task: update.rows[0],
     });
   } catch (err: any) {
     next(err);

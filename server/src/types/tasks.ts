@@ -9,3 +9,7 @@ export interface UpdateTaskBody {
   description?: string;
   assigned_to?: number;
 }
+
+export interface UpdateAssigneeBody {
+  assigned_to: number;
+}

@@ -63,6 +63,7 @@ export async function getAllTasks(
   const { userId } = req;
 
   try {
+    console.log("userId:", userId, typeof userId);
     const result = await db.query(
       `SELECT * FROM tasks WHERE assigned_to = $1`,
       [userId],

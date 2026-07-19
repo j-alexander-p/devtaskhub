@@ -1,24 +1,23 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import config from "../config";
 
-const anthropic = new Anthropic({
-  apiKey: config.anthropicApiKey,
+const openai = new OpenAI({
+  apiKey: config.openaiApiKey,
 });
 
 export async function enhanceTaskDescription(
   description: string,
 ): Promise<string> {
-  const message = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
     max_tokens: 500,
     messages: [
       {
         role: "user",
-        content: `Rewrite this task description to be clearer and more actionable. Add 2-3 specific acceptance criteria. Keep it concise.\n\nOriginal description: "${description}"`,
+        content: `Rewrite this task description to be clearer and more actionable. Add 2-3 specific acceptance criteria. No longer than 60 words. No markdown formatting. Plain text only.\n\nOriginal description: "${description}"`,
       },
     ],
   });
 
-  const textBlock = message.content.find((block) => block.type === "text");
-  return textBlock?.type === "text" ? textBlock.text : description;
+  return response.choices[0]?.message?.content ?? description;
 }

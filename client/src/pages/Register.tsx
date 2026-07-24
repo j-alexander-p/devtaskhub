@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { RegisterBody } from "../types/auth";
 
 function Register() {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<RegisterBody>({
     username: "",
     email: "",
@@ -24,7 +25,8 @@ function Register() {
     if (response.ok) {
       navigate("/login");
     } else {
-      console.log("Registration failed");
+      const data = await response.json();
+      setErrorMessage(data.error);
     }
   }
 
@@ -36,33 +38,36 @@ function Register() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        name="username"
-        placeholder="Username"
-        value={formData.username}
-        onChange={handleChange}
-      />
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+        />
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={handleChange}
-      />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+        />
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-      />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+        />
 
-      <button type="submit">Register</button>
-    </form>
+        <button type="submit">Register</button>
+      </form>
+      {errorMessage && <p>{errorMessage}</p>}
+    </div>
   );
 }
 

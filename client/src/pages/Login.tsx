@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LoginBody } from "../types/auth";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const { setUser } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loginData, setLoginData] = useState<LoginBody>({
     email: "",
@@ -19,10 +21,15 @@ function Login() {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(loginData),
     });
 
     if (response.ok) {
+      const data = await response.json();
+
+      setUser(data.user);
+
       navigate("/dashboard");
     } else {
       const data = await response.json();

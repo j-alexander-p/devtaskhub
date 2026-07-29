@@ -270,3 +270,27 @@ export async function removeProjectMember(
     next(err);
   }
 }
+
+export async function getTasksByProjectId(
+  req: Request<UrlParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const id = parseInt(req.params.id);
+
+  try {
+    const result = await db.query(
+      `
+      SELECT * FROM tasks WHERE project_id = $1
+      `,
+      [id],
+    );
+
+    res.status(200).json({
+      message: "Tasks retrieved successfully.",
+      projects: result.rows,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}

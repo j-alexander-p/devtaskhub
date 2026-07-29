@@ -39,6 +39,7 @@ function Dashboard() {
 
   return (
     <div>
+      <h1>Welcome, {user.email}!</h1>
       <h1>Your Projects</h1>
       {projects.map((project) => (
         <div key={project.id}>

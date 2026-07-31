@@ -294,3 +294,47 @@ export async function getTasksByProjectId(
     next(err);
   }
 }
+
+//******************************* Project-Task Route *********************************** */
+
+export async function getMembersByProjectId(
+  req: Request<UrlParams>,
+  res: Response,
+  next: NextFunction,
+) {
+  const projectId = parseInt(req.params.id);
+
+  try {
+    const resultCheck = await db.query(
+      `
+      SELECT  * FROM projects WHERE id = $1
+      `,
+      [projectId],
+    );
+
+    if (!resultCheck.rows[0]) {
+      return res.status(404).json({
+        error: "Project not found.",
+      });
+    }
+
+    const result = await db.query(
+      `
+      SELECT u.id, u.username, pm.role
+      FROM project_members pm
+      JOIN users u ON pm.user_id = u.id
+      WHERE pm.project_id = $1
+      `,
+      [projectId],
+    );
+
+    const members = result.rows;
+
+    res.status(200).json({
+      message: "Project members found.",
+      members,
+    });
+  } catch (err: any) {
+    next(err);
+  }
+}

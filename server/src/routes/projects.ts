@@ -7,6 +7,7 @@ import createProject, {
   addProjectMember,
   removeProjectMember,
   getTasksByProjectId,
+  getMembersByProjectId,
 } from "../controllers/projects";
 import { createTask } from "../controllers/tasks";
 
@@ -29,5 +30,7 @@ router.delete("/:id/members/:memberId", removeProjectMember);
 router.post("/:id/tasks", createTask);
 
 router.get("/:id/tasks", getTasksByProjectId);
+
+router.get("/:id/members", getMembersByProjectId);
 
 export default router;

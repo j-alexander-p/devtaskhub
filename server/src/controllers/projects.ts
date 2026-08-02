@@ -288,7 +288,7 @@ export async function getTasksByProjectId(
 
     res.status(200).json({
       message: "Tasks retrieved successfully.",
-      projects: result.rows,
+      tasks: result.rows,
     });
   } catch (err: any) {
     next(err);

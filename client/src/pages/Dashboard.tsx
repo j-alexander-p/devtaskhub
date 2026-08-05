@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import type { Project } from "../types/projects";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
   const { user } = useAuth();
@@ -43,7 +44,7 @@ function Dashboard() {
       <h1>Your Projects</h1>
       {projects.map((project) => (
         <div key={project.id}>
-          <h2>{project.project_name}</h2>
+          <Link to={`/projects/${project.id}`}>{project.project_name}</Link>
           <p>Status: {project.status}</p>
         </div>
       ))}

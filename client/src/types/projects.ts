@@ -19,3 +19,9 @@ export interface Task {
   status: string;
   assigned_to: number;
 }
+
+export interface CreateTaskBody {
+  title: string;
+  description?: string;
+  assigned_to?: string;
+}

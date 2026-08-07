@@ -1,61 +1,112 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import type { Member, Project, Task } from "../types/projects";
+import type { Member, Project, Task, CreateTaskBody } from "../types/projects";
 
 function ProjectDetails() {
+  // project details display
   const [project, setProject] = useState<Project | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  //task creation form details
+  const [newTask, setNewTask] = useState<CreateTaskBody>({
+    title: "",
+    description: "",
+    assigned_to: "",
+  });
+
   const { id } = useParams();
 
-  useEffect(() => {
-    async function getDetails() {
-      try {
-        const responseMembers = await fetch(
-          `http://localhost:3000/projects/${id}/members`,
-          {
-            credentials: "include",
-          },
-        );
-        const dataMembers = await responseMembers.json();
-        setMembers(dataMembers.members);
+  async function getDetails() {
+    try {
+      const responseMembers = await fetch(
+        `http://localhost:3000/projects/${id}/members`,
+        {
+          credentials: "include",
+        },
+      );
+      const dataMembers = await responseMembers.json();
+      setMembers(dataMembers.members);
 
-        const responseProject = await fetch(
-          `http://localhost:3000/projects/${id}`,
-          {
-            credentials: "include",
-          },
-        );
-        const dataProject = await responseProject.json();
-        setProject(dataProject.project);
+      const responseProject = await fetch(
+        `http://localhost:3000/projects/${id}`,
+        {
+          credentials: "include",
+        },
+      );
+      const dataProject = await responseProject.json();
+      setProject(dataProject.project);
 
-        const responseTasks = await fetch(
-          `http://localhost:3000/projects/${id}/tasks`,
-          {
-            credentials: "include",
-          },
-        );
-        const dataTasks = await responseTasks.json();
-        setTasks(dataTasks.tasks);
+      const responseTasks = await fetch(
+        `http://localhost:3000/projects/${id}/tasks`,
+        {
+          credentials: "include",
+        },
+      );
+      const dataTasks = await responseTasks.json();
+      setTasks(dataTasks.tasks);
 
-        setLoading(false);
-      } catch (err: any) {
-        setLoading(false);
-        setError("Failed to fetch project details.");
-      }
+      setLoading(false);
+    } catch (err: any) {
+      setLoading(false);
+      setError("Failed to fetch project details.");
     }
+  }
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) {
+    setNewTask({
+      ...newTask,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const response = await fetch(`http://localhost:3000/projects/${id}/tasks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        title: newTask.title,
+        description: newTask.description,
+        assigned_to: newTask.assigned_to
+          ? parseInt(newTask.assigned_to)
+          : undefined,
+      }),
+    });
+
+    if (response.ok) {
+      setNewTask({
+        title: "",
+        description: "",
+        assigned_to: "",
+      });
+
+      await getDetails();
+    } else {
+      const data = await response.json();
+
+      setError(data.error);
+    }
+  }
+
+  useEffect(() => {
     getDetails();
   }, []);
 
-  if (!project) {
-    return <p>Project not found.</p>;
-  }
-
   if (loading) {
     return <p>Loading...</p>;
+  }
+
+  if (!project) {
+    return <p>Project not found.</p>;
   }
 
   if (error) {
@@ -64,6 +115,39 @@ function ProjectDetails() {
 
   return (
     <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="title"
+          placeholder="Task Title"
+          value={newTask.title}
+          onChange={handleChange}
+        />
+
+        <input
+          type="text"
+          name="description"
+          placeholder="Task Description"
+          value={newTask.description}
+          onChange={handleChange}
+        />
+
+        <select
+          name="assigned_to"
+          value={newTask.assigned_to}
+          onChange={handleChange}
+        >
+          <option value="">Unassigned</option>
+
+          {members.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.username}
+            </option>
+          ))}
+        </select>
+
+        <button type="submit">Create Task</button>
+      </form>
       <div>
         <h2>{project.project_name}</h2>
         {tasks.map((task) => (

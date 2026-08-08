@@ -97,6 +97,21 @@ function ProjectDetails() {
     }
   }
 
+  async function deleteTask(taskId: number) {
+    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      await getDetails();
+    } else {
+      const data = await response.json();
+
+      setError(data.error);
+    }
+  }
+
   useEffect(() => {
     getDetails();
   }, []);
@@ -154,6 +169,7 @@ function ProjectDetails() {
           <div key={task.id}>
             <h3>{task.title}</h3>
             <h3>{task.description}</h3>
+            <button onClick={() => deleteTask(task.id)}>Delete</button>
           </div>
         ))}
         {members.map((member) => (

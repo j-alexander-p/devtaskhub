@@ -281,7 +281,7 @@ export async function getTasksByProjectId(
   try {
     const result = await db.query(
       `
-      SELECT * FROM tasks WHERE project_id = $1
+      SELECT * FROM tasks WHERE project_id = $1 ORDER BY id
       `,
       [id],
     );

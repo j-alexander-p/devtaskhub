@@ -112,6 +112,24 @@ function ProjectDetails() {
     }
   }
 
+  async function updateStatus(taskId: number, statusUpdate: string) {
+    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: statusUpdate }),
+    });
+
+    if (response.ok) {
+      await getDetails();
+    } else {
+      const data = await response.json();
+      setError(data.error);
+    }
+  }
+
   useEffect(() => {
     getDetails();
   }, []);
@@ -165,17 +183,27 @@ function ProjectDetails() {
       </form>
       <div>
         <h2>{project.project_name}</h2>
-        {tasks.map((task) => (
-          <div key={task.id}>
-            <h3>{task.title}</h3>
-            <h3>{task.description}</h3>
-            <button onClick={() => deleteTask(task.id)}>Delete</button>
-          </div>
-        ))}
         {members.map((member) => (
           <div key={member.id}>
             <h3>{member.username}</h3>
             <h3>{member.role}</h3>
+          </div>
+        ))}
+        {tasks.map((task) => (
+          <div key={task.id}>
+            <h3>{task.title}</h3>
+            <h3>{task.description}</h3>
+            <button
+              onClick={() =>
+                updateStatus(
+                  task.id,
+                  task.status === "pending" ? "complete" : "pending",
+                )
+              }
+            >
+              {task.status === "pending" ? "Mark complete" : "Mark pending"}
+            </button>
+            <button onClick={() => deleteTask(task.id)}>Delete</button>
           </div>
         ))}
       </div>

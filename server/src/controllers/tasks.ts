@@ -116,7 +116,7 @@ export async function updateTask(
 ) {
   const taskId = parseInt(req.params.id);
   const { userId } = req;
-  const { title, description, assigned_to } = req.body;
+  const { title, description, assigned_to, status } = req.body;
 
   try {
     const grabTask = await db.query("SELECT * FROM tasks WHERE id = $1 ", [
@@ -136,10 +136,11 @@ export async function updateTask(
     const newTitle = title ?? task.title;
     const newDescription = description ?? task.description;
     const newAssignment = assigned_to ?? task.assigned_to;
+    const newStatus = status ?? task.status;
 
     const updatedTask = await db.query(
-      "UPDATE tasks SET title = $1, description = $2, assigned_to = $3 WHERE id = $4 RETURNING id, title, description, assigned_to",
-      [newTitle, newDescription, newAssignment, taskId],
+      "UPDATE tasks SET title = $1, description = $2, assigned_to = $3, status = $4 WHERE id = $5 RETURNING id, title, description, assigned_to, status",
+      [newTitle, newDescription, newAssignment, newStatus, taskId],
     );
 
     res.status(200).json({

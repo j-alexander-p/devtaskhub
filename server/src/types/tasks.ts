@@ -8,6 +8,7 @@ export interface UpdateTaskBody {
   title: string;
   description?: string;
   assigned_to?: number;
+  status: string;
 }
 
 export interface UpdateAssigneeBody {

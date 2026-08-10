@@ -132,7 +132,7 @@ function ProjectDetails() {
 
   useEffect(() => {
     getDetails();
-  }, []);
+  }, [id]);
 
   if (loading) {
     return <p>Loading...</p>;

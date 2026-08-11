@@ -25,3 +25,7 @@ export interface CreateTaskBody {
   description?: string;
   assigned_to?: string;
 }
+
+export interface NewProjectBody {
+  project_name: string;
+}

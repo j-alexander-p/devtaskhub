@@ -9,13 +9,11 @@ function ProjectDetails() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  //task creation form details
   const [newTask, setNewTask] = useState<CreateTaskBody>({
     title: "",
     description: "",
     assigned_to: "",
-  });
+  }); //task creation form details
 
   const { id } = useParams();
 

@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { Member, Project, Task, CreateTaskBody } from "../types/projects";
+import { useAuth } from "../context/AuthContext";
 
 function ProjectDetails() {
   // project details display
@@ -15,6 +16,7 @@ function ProjectDetails() {
     assigned_to: "",
   }); //task creation form details
 
+  const { user } = useAuth();
   const { id } = useParams();
 
   async function getDetails() {
@@ -128,6 +130,27 @@ function ProjectDetails() {
     }
   }
 
+  async function reassignTask(taskId: number, newAssigneeId: number) {
+    const response = await fetch(
+      `http://localhost:3000/tasks/${taskId}/assign`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ assigned_to: newAssigneeId }),
+      },
+    );
+
+    if (response.ok) {
+      await getDetails();
+    } else {
+      const data = await response.json();
+      setError(data.error);
+    }
+  }
+
   useEffect(() => {
     getDetails();
   }, [id]);
@@ -191,6 +214,23 @@ function ProjectDetails() {
           <div key={task.id}>
             <h3>{task.title}</h3>
             <h3>{task.description}</h3>
+            {user?.id === task.created_by && (
+              <select
+                name="reassign_to"
+                value={task.assigned_to ?? ""}
+                onChange={(e) =>
+                  reassignTask(task.id, parseInt(e.target.value))
+                }
+              >
+                <option value="">Unassigned</option>
+
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.username}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               onClick={() =>
                 updateStatus(

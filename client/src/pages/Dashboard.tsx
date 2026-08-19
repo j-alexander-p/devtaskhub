@@ -1,38 +1,35 @@
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect } from "react";
-import type { Project, NewProjectBody } from "../types/projects";
+import { useState } from "react";
+import type { NewProjectBody } from "../types/projects";
 import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProject, getProjects } from "../api/projects";
 
 function Dashboard() {
   const { user } = useAuth();
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [newProject, setNewProject] = useState<NewProjectBody>({
     project_name: "",
   });
-  const [newProjErr, setNewProjErr] = useState<string | null>(null);
 
-  async function fetchProjects() {
-    try {
-      const response = await fetch(`http://localhost:3000/projects/`, {
-        credentials: "include",
-      });
+  const {
+    data: projects,
+    isPending,
+    error,
+  } = useQuery({
+    queryKey: ["projects"],
+    queryFn: getProjects,
+  });
 
-      const data = await response.json();
-      setProjects(data.projects);
+  const queryClient = useQueryClient();
 
-      setLoading(false);
-    } catch (err: any) {
-      setError("Failed to load projects");
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  const createProjectMutation = useMutation({
+    mutationFn: createProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setNewProject({ project_name: "" });
+    },
+  });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setNewProject({
@@ -44,32 +41,15 @@ function Dashboard() {
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:3000/projects", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newProject),
-      credentials: "include",
-    });
-
-    if (response.ok) {
-      setNewProject({ project_name: "" });
-
-      fetchProjects();
-    } else {
-      const data = await response.json();
-
-      setNewProjErr(data.error);
-    }
+    createProjectMutation.mutate(newProject);
   }
 
-  if (loading) {
+  if (isPending) {
     return <p>Loading...</p>;
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return <p>{error.message}</p>;
   }
 
   return (
@@ -87,7 +67,11 @@ function Dashboard() {
           />
           <button type="submit">Create</button>
         </form>
-        <div>{newProjErr && <p>{newProjErr}</p>}</div>
+        <div>
+          {createProjectMutation.error && (
+            <p>{createProjectMutation.error.message}</p>
+          )}
+        </div>
       </div>
       {projects.map((project) => (
         <div key={project.id}>

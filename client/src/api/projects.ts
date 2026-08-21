@@ -1,5 +1,5 @@
 import type { NewProjectBody } from "../types/projects";
-import type { Project } from "../types/projects";
+import type { Project, Member } from "../types/projects";
 
 export async function getProjects(): Promise<Project[]> {
   const response = await fetch(`http://localhost:3000/projects/`, {
@@ -7,7 +7,7 @@ export async function getProjects(): Promise<Project[]> {
   });
 
   if (!response.ok) {
-    throw new Error("Couldn't fetch projects");
+    throw new Error("Couldn't fetch projects.");
   }
 
   const data = await response.json();
@@ -31,4 +31,21 @@ export async function createProject(body: NewProjectBody) {
   }
 
   return response.json();
+}
+
+export async function getMembers(projectId: number): Promise<Member[]> {
+  const response = await fetch(
+    `http://localhost:3000/projects/${projectId}/members`,
+    {
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Couldn't fetch members.");
+  }
+
+  const data = await response.json();
+
+  return data.members;
 }

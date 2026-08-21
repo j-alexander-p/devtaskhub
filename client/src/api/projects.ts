@@ -49,3 +49,17 @@ export async function getMembers(projectId: number): Promise<Member[]> {
 
   return data.members;
 }
+
+export async function getProject(projectId: number) {
+  const response = await fetch(`http://localhost:3000/projects/${projectId}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error("Coulddn't fetch project.");
+  }
+
+  const data = await response.json();
+
+  return data.project;
+}

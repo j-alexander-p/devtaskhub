@@ -21,12 +21,18 @@ export interface Task {
   created_by: number;
 }
 
-export interface CreateTaskBody {
+export interface CreateTaskForm {
   title: string;
   description?: string;
-  assigned_to?: string;
+  assigned_to: string;
 }
 
 export interface NewProjectBody {
   project_name: string;
+}
+
+export interface NewTaskBody {
+  title: string;
+  description?: string;
+  assigned_to: number | null;
 }

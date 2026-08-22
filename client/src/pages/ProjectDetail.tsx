@@ -1,16 +1,24 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import type { Member, Project, Task, CreateTaskBody } from "../types/projects";
+import { useState } from "react";
+import type { CreateTaskForm, NewTaskBody } from "../types/projects";
 import { useAuth } from "../context/AuthContext";
+import {
+  getMembers,
+  getProjectById,
+  getTasksByProjectId,
+} from "../api/projects";
+import {
+  createTask,
+  deleteTask,
+  reassignTask,
+  updateTaskStatus,
+} from "../api/tasks";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 function ProjectDetails() {
   // project details display
-  const [project, setProject] = useState<Project | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [newTask, setNewTask] = useState<CreateTaskBody>({
+
+  const [newTask, setNewTask] = useState<CreateTaskForm>({
     title: "",
     description: "",
     assigned_to: "",
@@ -19,41 +27,34 @@ function ProjectDetails() {
   const { user } = useAuth();
   const { id } = useParams();
 
-  async function getDetails() {
-    try {
-      const responseMembers = await fetch(
-        `http://localhost:3000/projects/${id}/members`,
-        {
-          credentials: "include",
-        },
-      );
-      const dataMembers = await responseMembers.json();
-      setMembers(dataMembers.members);
+  const {
+    data: members,
+    isPending: membersPending,
+    error: membersError,
+  } = useQuery({
+    queryKey: ["members", id],
+    queryFn: () => getMembers(Number(id)),
+  });
 
-      const responseProject = await fetch(
-        `http://localhost:3000/projects/${id}`,
-        {
-          credentials: "include",
-        },
-      );
-      const dataProject = await responseProject.json();
-      setProject(dataProject.project);
+  const {
+    data: project,
+    isPending: projectPending,
+    error: projectError,
+  } = useQuery({
+    queryKey: ["project", id],
+    queryFn: () => getProjectById(Number(id)),
+  });
 
-      const responseTasks = await fetch(
-        `http://localhost:3000/projects/${id}/tasks`,
-        {
-          credentials: "include",
-        },
-      );
-      const dataTasks = await responseTasks.json();
-      setTasks(dataTasks.tasks);
+  const {
+    data: tasks,
+    isPending: taskPending,
+    error: taskError,
+  } = useQuery({
+    queryKey: ["tasks", id],
+    queryFn: () => getTasksByProjectId(Number(id)),
+  });
 
-      setLoading(false);
-    } catch (err: any) {
-      setLoading(false);
-      setError("Failed to fetch project details.");
-    }
-  }
+  const queryClient = useQueryClient();
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -64,98 +65,54 @@ function ProjectDetails() {
     });
   }
 
+  const createTaskMutation = useMutation({
+    mutationFn: ({ id, body }: { id: number; body: NewTaskBody }) =>
+      createTask(id, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: ({ taskId }: { taskId: number }) => deleteTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ taskId, status }: { taskId: number; status: string }) =>
+      updateTaskStatus(taskId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+    },
+  });
+
+  const reassignTaskMutation = useMutation({
+    mutationFn: ({
+      taskId,
+      assignedTo,
+    }: {
+      taskId: number;
+      assignedTo: number;
+    }) => reassignTask(taskId, assignedTo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", id] });
+    },
+  });
+
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    const response = await fetch(`http://localhost:3000/projects/${id}/tasks`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    createTaskMutation.mutate({
+      id: Number(id),
+      body: {
+        ...newTask,
+        assigned_to: newTask.assigned_to ? Number(newTask.assigned_to) : null,
       },
-      credentials: "include",
-      body: JSON.stringify({
-        title: newTask.title,
-        description: newTask.description,
-        assigned_to: newTask.assigned_to
-          ? parseInt(newTask.assigned_to)
-          : undefined,
-      }),
     });
-
-    if (response.ok) {
-      setNewTask({
-        title: "",
-        description: "",
-        assigned_to: "",
-      });
-
-      await getDetails();
-    } else {
-      const data = await response.json();
-
-      setError(data.error);
-    }
   }
 
-  async function deleteTask(taskId: number) {
-    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    if (response.ok) {
-      await getDetails();
-    } else {
-      const data = await response.json();
-
-      setError(data.error);
-    }
-  }
-
-  async function updateStatus(taskId: number, statusUpdate: string) {
-    const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status: statusUpdate }),
-    });
-
-    if (response.ok) {
-      await getDetails();
-    } else {
-      const data = await response.json();
-      setError(data.error);
-    }
-  }
-
-  async function reassignTask(taskId: number, newAssigneeId: number) {
-    const response = await fetch(
-      `http://localhost:3000/tasks/${taskId}/assign`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ assigned_to: newAssigneeId }),
-      },
-    );
-
-    if (response.ok) {
-      await getDetails();
-    } else {
-      const data = await response.json();
-      setError(data.error);
-    }
-  }
-
-  useEffect(() => {
-    getDetails();
-  }, [id]);
-
-  if (loading) {
+  if (membersPending || projectPending || taskPending) {
     return <p>Loading...</p>;
   }
 
@@ -163,8 +120,8 @@ function ProjectDetails() {
     return <p>Project not found.</p>;
   }
 
-  if (error) {
-    return <p>{error}</p>;
+  if (membersError || projectError || taskError) {
+    return <p>Something went wrong.</p>;
   }
 
   return (
@@ -219,7 +176,10 @@ function ProjectDetails() {
                 name="reassign_to"
                 value={task.assigned_to ?? ""}
                 onChange={(e) =>
-                  reassignTask(task.id, parseInt(e.target.value))
+                  reassignTaskMutation.mutate({
+                    taskId: task.id,
+                    assignedTo: parseInt(e.target.value),
+                  })
                 }
               >
                 <option value="">Unassigned</option>
@@ -233,15 +193,19 @@ function ProjectDetails() {
             )}
             <button
               onClick={() =>
-                updateStatus(
-                  task.id,
-                  task.status === "pending" ? "complete" : "pending",
-                )
+                updateStatusMutation.mutate({
+                  taskId: task.id,
+                  status: task.status === "pending" ? "complete" : "pending",
+                })
               }
             >
               {task.status === "pending" ? "Mark complete" : "Mark pending"}
             </button>
-            <button onClick={() => deleteTask(task.id)}>Delete</button>
+            <button
+              onClick={() => deleteTaskMutation.mutate({ taskId: task.id })}
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>

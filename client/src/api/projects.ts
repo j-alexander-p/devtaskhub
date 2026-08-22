@@ -50,7 +50,7 @@ export async function getMembers(projectId: number): Promise<Member[]> {
   return data.members;
 }
 
-export async function getProject(projectId: number) {
+export async function getProjectById(projectId: number) {
   const response = await fetch(`http://localhost:3000/projects/${projectId}`, {
     credentials: "include",
   });
@@ -62,4 +62,21 @@ export async function getProject(projectId: number) {
   const data = await response.json();
 
   return data.project;
+}
+
+export async function getTasksByProjectId(projectId: number) {
+  const response = await fetch(
+    `http://localhost:3000/projects/${projectId}/tasks`,
+    {
+      credentials: "include",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Couldn't fetch tasks for projectId: ${projectId}`);
+  }
+
+  const data = await response.json();
+
+  return data.tasks;
 }
